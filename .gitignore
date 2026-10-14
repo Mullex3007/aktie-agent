@@ -1,6 +1,7 @@
 # Hemmeligheder - må aldrig på GitHub
 .env
 .env.*
+!.env.example
 *.key
 *.pem
 

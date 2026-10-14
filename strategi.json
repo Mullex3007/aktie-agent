@@ -1,0 +1,43 @@
+{
+  "analyse": "Data viser ekstrem polarisering: Energi (76%), Finans (61%), Forsikring (100%) og Tech (73%) performer stærkt, mens 'Andre' sektoren (516 handler, 41% hit rate) dræner performance. Kritiske fund: (1) TSLA (0%, 28 handler), ENPH (10%, 20 handler), PYPL (16%, 19 handler) er statistisk signifikante tabere - tilsammen 67 handler med katastrofal performance. (2) CVX, BP, META, JPM viser konsistent 79-100% hit rate over 12-19 handler - dette er IKKE støj. (3) Nuværende P/E<25 er for løs - top performers har P/E 7-15, mens tabere ofte ligger højere eller mangler profitabilitet. (4) 'Andre' sektoren indeholder defensive/consumer stocks (MCD, NKE, PEP, NSRGY) med 21-31% hit rate - disse passer ikke til strategien. (5) Seneste 20 handler viser forsikring/finans fungerer (7/12 vindere), men bredden i Finans varierer (MS 20% vs JPM 84%). Kerneproblemet: For bred eksponering mod lavkvalitets-value traps i 'Andre' sektoren og inkludering af vækstaktier uden profit (ENPH) eller høj volatilitet (TSLA).",
+  "anbefalinger": [
+    "Implementer hård blacklist på aktier med >15 handler og <35% hit rate (TSLA, ENPH, PYPL, NSRGY, NKE, QCOM, MCD, PEP) - disse er statistisk validerede tabere",
+    "Skærp P/E krav til 7-18 range for at fange profitable value plays og undgå både unprofitable growth (TSLA) og defensive traps med lav vækst",
+    "Ekskluder 'Andre' sektoren helt fra automatiske handler - 516 handler med 41% hit rate er strategiens største performance-dræner. Fokuser 100% på de 4 vindende sektorer",
+    "Tilføj whitelist-system: Prioriter aktier med >75% hit rate over minimum 10 handler (CVX, BP, META, JPM, BAC) ved at sænke konfidenstærskel til 70% for disse",
+    "Stram 52-ugers lav kravet til max 25% afstand - top performers handler typisk tættere på bunden, hvilket indikerer ægte contrarian value frem for falling knives"
+  ],
+  "undgaa_aktier": [
+    "TSLA",
+    "ENPH",
+    "PYPL",
+    "NFLX",
+    "NSRGY",
+    "NKE",
+    "PEP",
+    "QCOM",
+    "MCD",
+    "MS"
+  ],
+  "fokus_aktier": [
+    "CVX",
+    "BP",
+    "META",
+    "JPM",
+    "BAC",
+    "UBER",
+    "ABT",
+    "MRNA",
+    "GOOGL"
+  ],
+  "justeret_max_pe": 18,
+  "justeret_max_afstand_fra_lav": 0.25,
+  "fokus_sektorer": [
+    "Energi",
+    "Forsikring",
+    "Finans",
+    "Tech"
+  ],
+  "justeret_konfidensgraense": 78,
+  "opdateret": "2026-10-13 13:16"
+}

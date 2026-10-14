@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>AKTIE AGENT TERMINAL</title>
+    <meta http-equiv="refresh" content="60">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f7fa; color: #1a2332; padding: 20px; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; background: #1a2332; color: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; }
+        .topbar h1 { font-size: 18px; letter-spacing: 2px; color: #7eb8f7; }
+        .topbar .meta { font-size: 11px; color: #8899aa; }
+        .live-dot { display: inline-block; width: 8px; height: 8px; background: #4caf50; border-radius: 50%; margin-right: 6px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .grid-32 { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .kort { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+        .kort-titel { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: #8899aa; text-transform: uppercase; margin-bottom: 12px; }
+        .stat-tal { font-size: 36px; font-weight: 700; color: #1a2332; line-height: 1; }
+        .stat-sub { font-size: 11px; color: #8899aa; margin-top: 4px; }
+        .hit-tal { font-size: 52px; font-weight: 700; line-height: 1; }
+        .rr-tal { font-size: 38px; font-weight: 700; line-height: 1; }
+        .maal { font-size: 10px; color: #8899aa; margin-top: 4px; letter-spacing: 1px; }
+        .metrics-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 15px; }
+        .metric { background: #f5f7fa; border-radius: 8px; padding: 10px; text-align: center; }
+        .metric-tal { font-size: 16px; font-weight: 700; }
+        .metric-label { font-size: 9px; color: #8899aa; margin-top: 2px; letter-spacing: 1px; }
+        .groen { color: #2e7d32; }
+        .roed { color: #c62828; }
+        .blaa { color: #1565c0; }
+        .graa { color: #546e7a; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { font-size: 10px; font-weight: 600; letter-spacing: 1px; color: #8899aa; padding: 8px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+        td { padding: 8px; border-bottom: 1px solid #f9f9f9; }
+        tr:hover { background: #f8fafc; }
+        .buy-tag { background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+        .sell-tag { background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+        .ticker-navn { font-weight: 600; color: #1565c0; }
+        .uge-boks { background: #1a2332; border-radius: 10px; padding: 20px; margin-bottom: 15px; color: white; }
+        .uge-titel { font-size: 10px; letter-spacing: 1.5px; color: #7eb8f7; margin-bottom: 10px; }
+        .uge-tekst { font-size: 13px; color: #cdd8e3; line-height: 1.6; }
+        .knap { background: #1565c0; color: white; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; letter-spacing: 1px; }
+        .knap:hover { background: #1976d2; }
+        .status { text-align: center; color: #8899aa; font-size: 10px; margin-top: 15px; }
+        .progress-bar { background: #e0e0e0; border-radius: 4px; height: 6px; margin-top: 8px; }
+        .progress-fill { height: 6px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <h1>AKTIE AGENT DASHBOARD</h1>
+        <div class="meta"><span class="live-dot"></span>LIVE | <span id="liveur"></span> | PAPER TRADING</div>
+    </div>
+    <div class="uge-boks">
+        <div class="uge-titel">UGENTLIG KONKLUSION</div>
+        <div class="uge-tekst">{{ uge_konklusion }}</div>
+    </div>
+    <div class="grid-3">
+        <div class="kort">
+            <div class="kort-titel">Portfolio Vaerdi</div>
+            <div class="stat-tal">${{ portfolio_value }}</div>
+            <div class="stat-sub">{{ aktive_positioner }} aktive positioner</div>
+            <div class="metrics-row">
+                <div class="metric"><div class="metric-tal">{{ total_handler }}</div><div class="metric-label">TOTAL</div></div>
+                <div class="metric"><div class="metric-tal groen">{{ positive }}</div><div class="metric-label">WINS</div></div>
+                <div class="metric"><div class="metric-tal roed">{{ negative }}</div><div class="metric-label">LOSSES</div></div>
+            </div>
+        </div>
+        <div class="kort" style="text-align:center;">
+            <div class="kort-titel">Hit Rate</div>
+            <div class="hit-tal" style="color: {{ hit_farve }}">{{ hit_rate }}%</div>
+            <div class="maal">MÅL: 70%+</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:{{ hit_rate }}%; background:{{ hit_farve }};"></div></div>
+        </div>
+        <div class="kort" style="text-align:center;">
+            <div class="kort-titel">Risk / Reward</div>
+            <div class="rr-tal" style="color: {{ rr_farve }}">1:{{ risk_reward }}</div>
+            <div class="maal">MÅL: 1:1.5+</div>
+            <div class="metrics-row">
+                <div class="metric"><div class="metric-tal groen">+{{ snit_gevinst }}%</div><div class="metric-label">SNIT WIN</div></div>
+                <div class="metric"><div class="metric-tal roed">{{ snit_tab }}%</div><div class="metric-label">SNIT TAB</div></div>
+                <div class="metric"><div class="metric-tal blaa">${{ cash }}</div><div class="metric-label">CASH</div></div>
+            </div>
+        </div>
+    </div>
+    <div class="grid-32">
+        <div class="kort">
+            <div class="kort-titel">Performance Over Tid</div>
+            <canvas id="performanceGraf" height="80"></canvas>
+        </div>
+        <div class="kort">
+            <div class="kort-titel">Positioner Per Sektor</div>
+            <canvas id="sektorGraf" height="160"></canvas>
+            <div style="text-align:center; margin-top:8px; font-size:10px; color:#8899aa;">{{ aktive_positioner }} positioner i alt</div>
+        </div>
+    </div>
+    <div class="grid-2">
+        <div class="kort">
+    <div class="kort-titel">Aktive Positioner Per Sektor ({{ aktive_positioner }})</div>
+    <canvas id="positionerGraf" height="160"></canvas>
+    <div style="margin-top:12px; max-height:250px; overflow-y:auto;">
+    {% set ns = namespace(sektor='') %}
+    {% set ns2 = namespace(col=0) %}
+    {% for sektor, ticker in sektor_detaljer %}
+        {% if sektor != ns.sektor %}
+            {% set ns.sektor = sektor %}
+            <div style="font-size:10px; font-weight:700; color:#8899aa; letter-spacing:1px; margin-top:8px; margin-bottom:2px; text-transform:uppercase;">{{ sektor }}</div>
+            <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+        {% endif %}
+        <div style="font-size:11px; color:#1565c0; background:#f0f4ff; border-radius:4px; padding:2px 6px;">{{ ticker }}</div>
+        {% if loop.last or sektor_detaljer[loop.index0+1][0] != sektor %}
+            </div>
+        {% endif %}
+    {% endfor %}
+    </div>
+
+        </div>
+        <div class="kort">
+            <div class="kort-titel">Seneste 10 Handler</div>
+            <table>
+                <tr><th>DATO</th><th>TICKER</th><th>TYPE</th><th>UDFALD</th></tr>
+                {% for h in seneste_handler %}
+                <tr>
+                    <td style="color:#8899aa">{{ h.dato[5:10] }}</td>
+                    <td class="ticker-navn">{{ h.ticker }}</td>
+                    <td><span class="{{ 'buy-tag' if h.anbefaling == 'BUY' else 'sell-tag' }}">{{ h.anbefaling }}</span></td>
+                    <td class="{{ 'groen' if '\u2705' in h.udfald else 'roed' if '\u274c' in h.udfald else 'graa' }}">{{ h.udfald }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+    <div style="text-align:center; margin-top:20px;">
+        <a href="/koer-agent"><button class="knap">KOR AGENT NU</button></a>
+    </div>
+    <p class="status">Opdateres automatisk hvert minut | Aktie Agent v3.0</p>
+    <script>
+    new Chart(document.getElementById("performanceGraf").getContext("2d"), {
+        type: "line",
+        data: { labels: {{ datoer | tojson }}, datasets: [{ data: {{ hit_rates | tojson }}, borderColor: "#1565c0", backgroundColor: "rgba(21,101,192,0.08)", fill: true, tension: 0.4, pointRadius: 2, borderWidth: 2 }] },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: "#8899aa", font: { size: 9 } }, grid: { color: "#f0f0f0" } }, y: { ticks: { color: "#8899aa", font: { size: 9 } }, grid: { color: "#f0f0f0" }, min: 0, max: 100 } } }
+    });
+    new Chart(document.getElementById("sektorGraf").getContext("2d"), {
+        type: "doughnut",
+        data: { labels: {{ sektor_labels | tojson }}, datasets: [{ data: {{ sektor_data | tojson }}, backgroundColor: ["#1565c0","#2e7d32","#00838f","#6a1b9a","#e65100","#546e7a"], borderWidth: 2, borderColor: "#fff" }] },
+        options: { responsive: true, plugins: {
+            legend: { position: "bottom", labels: { color: "#546e7a", font: { size: 9 }, boxWidth: 10, padding: 8 } },
+            tooltip: { callbacks: { label: function(c) { const total = c.dataset.data.reduce((a,b) => a+b, 0); const pct = Math.round(c.parsed / total * 100); return c.label + ": " + c.parsed + " (" + pct + "%)"; } } },
+            datalabels: { display: false }
+        }}
+    });new Chart(document.getElementById("positionerGraf").getContext("2d"), {
+    type: "doughnut",
+    data: { labels: {{ sektor_labels | tojson }}, datasets: [{ data: {{ sektor_data | tojson }}, backgroundColor: ["#1565c0","#2e7d32","#00838f","#6a1b9a","#e65100","#546e7a"], borderWidth: 2, borderColor: "#fff", datalabels: { color: "#fff", font: { size: 12, weight: "bold" }, formatter: function(value, ctx) { const total = ctx.dataset.data.reduce((a,b) => a+b, 0); const pct = Math.round(value / total * 100); return pct >= 5 ? pct + "%" : ""; } } }] },
+    options: { responsive: true, plugins: {
+        legend: { position: "right", labels: { color: "#546e7a", font: { size: 11 }, boxWidth: 12, padding: 10 } }
+    }},
+    plugins: [ChartDataLabels]
+});
+    </script>
+<script>
+function opdaterUr() {
+    const nu = new Date();
+    const dato = nu.toISOString().slice(0,10);
+    const tid = nu.toTimeString().slice(0,8);
+    document.getElementById('liveur').textContent = dato + ' ' + tid;
+}
+opdaterUr();
+setInterval(opdaterUr, 1000);
+</script>
+</body>
+</html>

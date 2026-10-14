@@ -1,0 +1,19 @@
+# Hemmeligheder - må aldrig på GitHub
+.env
+.env.*
+*.key
+*.pem
+
+# Handelsdata og logfiler (bliver på din Mac)
+handler_log*.json
+strategi_historik.json
+*.log
+
+# Python-cache og miljøer
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Mac
+.DS_Store

@@ -39,5 +39,8 @@
     "Tech"
   ],
   "justeret_konfidensgraense": 78,
-  "opdateret": "2026-10-13 13:16"
+  "opdateret": "2026-10-13 13:16",
+  "stop_loss_pct": 5,
+  "take_profit_pct": 8,
+  "maal_hit_rate": 60
 }

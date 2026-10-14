@@ -4,12 +4,14 @@ import json
 import finnhub
 import anthropic
 from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import MarketOrderRequest
-from alpaca.trading.enums import OrderSide, TimeInForce
+from alpaca.trading.requests import MarketOrderRequest, TakeProfitRequest, StopLossRequest
+from alpaca.trading.enums import OrderSide, TimeInForce, OrderClass
 from dotenv import load_dotenv
 from email_notifikation import send_email
 from datetime import datetime
 from screening import screen_aktier, ALLE_AKTIER
+from strategi import hent_strategi
+from sektorer import sektor_for
 
 load_dotenv()
 
@@ -23,6 +25,7 @@ alpaca_client = TradingClient(
 
 AKTIER = ["CVX", "BP", "SHEL", "XOM", "COP", "EOG", "SLB", "PSX", "VLO", "MPC", "JPM", "BAC", "GS", "C", "WFC", "BLK", "AXP", "USB", "TFC", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA", "AMD", "SAP", "ASML", "TSM", "ABT", "PFE", "JNJ", "UNH", "MRK", "ABBV", "TMO", "DHR", "BMY", "AMGN", "DIS", "UBER", "SBUX", "KO", "WMT", "COST", "TGT", "CAT", "DE", "HON", "GE", "MMM", "UPS", "FDX", "BA", "LMT", "RTX", "NVO", "TM", "BABA", "SONY", "BRK-B", "V", "MA", "TXN"]
 LOG_FIL = "handler_log.json"
+CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-5-5")
 
 def hent_aktiedata(ticker):
     try:
@@ -58,13 +61,20 @@ def gem_handel(handel):
 def er_allerede_handlet_i_dag(ticker):
     """Tjekker om aktien allerede er handlet i dag"""
     handler = hent_tidligere_handler()
-    i_dag = datetime.now().strftime("%Y-W%W")
+    i_dag = datetime.now().strftime("%Y-%m-%d")
     for h in handler:
         if h["ticker"] == ticker and h["dato"].startswith(i_dag):
             return True
     return False
 
-def analyser_med_claude(aktiedata):
+def hent_aabne_positioner():
+    try:
+        return {p.symbol for p in alpaca_client.get_all_positions()}
+    except Exception as e:
+        print(f"⚠️  Kunne ikke hente positioner: {e}")
+        return set()
+
+def analyser_med_claude(aktiedata, strategi):
     tidligere_handler = hent_tidligere_handler()
     historik_tekst = ""
     if tidligere_handler:
@@ -89,12 +99,13 @@ Du er en elitaer AI-aktieanalytiker for en kvantitativ fond. Din opgave er at vu
 }}
 </aktie_data>
 
-<sektor_historik>
-- Forsikring og finans: Historisk 79-85% success. Hoej prioritet.
-- Energi: Historisk 59-100% success. Hoej prioritet.
-- Tech og sundhed: Moderat prioritet.
-- Andre sektorer: Normal prioritet.
-</sektor_historik>
+<sektor>{sektor_for(aktiedata['ticker'])}</sektor>
+
+<traener_agentens_konklusion>
+Fokussektorer: {", ".join(strategi["fokus_sektorer"]) or "ingen"}
+Aktier der historisk vinder: {", ".join(strategi["fokus_aktier"]) or "ingen"}
+Analyse: {strategi["analyse"][:1500] or "Ingen analyse endnu."}
+</traener_agentens_konklusion>
 
 <tidligere_handler>
 {historik_tekst if historik_tekst else "Ingen tidligere handler."}
@@ -108,29 +119,38 @@ Returner KUN dette JSON-objekt:
   "argumentation": "Kort begrundelse."
 }}
 """
-    besked = anthropic_client.messages.create(
-        model="claude-sonnet-4-5",
-        max_tokens=500,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    tekst = besked.content[0].text
-    tekst = tekst.strip().replace("```json", "").replace("```", "").strip()
-    data = json.loads(tekst)
-    if "konfidensgrad_pct" in data:
+    try:
+        besked = anthropic_client.messages.create(
+            model=CLAUDE_MODEL,
+            max_tokens=500,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        tekst = besked.content[0].text
+        # Tag kun JSON-delen, selv hvis Claude skriver tekst rundt om
+        start, slut = tekst.find("{"), tekst.rfind("}")
+        data = json.loads(tekst[start:slut + 1])
         return {
             "anbefaling": "KØB" if data.get("anbefaling") == "KOEB" else "HOLD",
             "begrundelse": data.get("argumentation", ""),
-            "konfidensgrad": data.get("konfidensgrad_pct", 0)
+            "konfidensgrad": int(data.get("konfidensgrad_pct", 0))
         }
-    return data
+    except Exception as e:
+        print(f"   ⚠️  Kunne ikke analysere {aktiedata['ticker']}: {e}")
+        return None
 
-def udfør_handel(ticker, side, pris, antal=1, begrundelse=""):
+def udfør_handel(ticker, side, pris, strategi, antal=1, begrundelse=""):
     try:
+        # Bracket-ordre: købet får automatisk stop-loss og take-profit hos Alpaca
+        stop_pris = round(pris * (1 - strategi["stop_loss_pct"] / 100), 2)
+        take_pris = round(pris * (1 + strategi["take_profit_pct"] / 100), 2)
         ordre = MarketOrderRequest(
             symbol=ticker,
             qty=antal,
             side=side,
-            time_in_force=TimeInForce.GTC
+            time_in_force=TimeInForce.GTC,
+            order_class=OrderClass.BRACKET,
+            take_profit=TakeProfitRequest(limit_price=take_pris),
+            stop_loss=StopLossRequest(stop_price=stop_pris)
         )
         alpaca_client.submit_order(ordre)
         gem_handel({
@@ -138,18 +158,25 @@ def udfør_handel(ticker, side, pris, antal=1, begrundelse=""):
             "ticker": ticker,
             "anbefaling": side.value.upper(),
             "pris": pris,
+            "stop_loss": stop_pris,
+            "take_profit": take_pris,
             "udfald": "afventer",
             "begrundelse": begrundelse
         })
-        
+
         # Email sendes ikke ved hver handel - kun i månedlig rapport
-        print(f"✅ Ordre udført: {side.value} {antal} stk. {ticker}")
+        print(f"✅ Ordre udført: {side.value} {antal} stk. {ticker} (stop {stop_pris}, mål {take_pris})")
     except Exception as e:
         print(f"❌ Handelsfejl for {ticker}: {e}")
 
 def kør_agent():
     print("🤖 Aktie-agent starter...\n")
     dagens_handler = []
+    strategi = hent_strategi()
+    graense = strategi["justeret_konfidensgraense"]
+    print(f"📋 Strategi: P/E < {strategi['justeret_max_pe']}, konfidens >= {graense}%, "
+          f"stop-loss {strategi['stop_loss_pct']}%, take-profit {strategi['take_profit_pct']}%")
+    aabne = hent_aabne_positioner()
 
     # Kør screening først
     print("🔍 Kører screening af 200 aktier...")
@@ -168,22 +195,24 @@ def kør_agent():
         if er_allerede_handlet_i_dag(ticker):
             print(f"⏭️  {ticker} – allerede handlet i dag, springer over")
             continue
+        if ticker in aabne:
+            print(f"⏭️  {ticker} – har allerede en åben position, springer over")
+            continue
 
         print(f"📊 Analyserer {ticker}...")
         data = aktiedata
 
-        analyse = analyser_med_claude(data)
+        analyse = analyser_med_claude(data, strategi)
+        if analyse is None:
+            continue
         print(f"   Anbefaling: {analyse['anbefaling']}")
         print(f"   Begrundelse: {analyse['begrundelse']}")
         print(f"   Konfidensgrad: {analyse['konfidensgrad']}%")
 
-        if analyse["konfidensgrad"] >= 78:
+        if analyse["konfidensgrad"] >= graense:
             if analyse['anbefaling'] == "KØB":
-                udfør_handel(ticker, OrderSide.BUY, data['pris'], begrundelse=analyse['begrundelse'])
+                udfør_handel(ticker, OrderSide.BUY, data['pris'], strategi, begrundelse=analyse['begrundelse'])
                 dagens_handler.append(f"KØB {ticker} @ ${data['pris']}")
-            elif analyse['anbefaling'] == "SÆLG":
-                udfør_handel(ticker, OrderSide.SELL, data['pris'], begrundelse=analyse['begrundelse'])
-                dagens_handler.append(f"SÆLG {ticker} @ ${data['pris']}")
         else:
             print(f"   ⏭️  Springer over – konfidens for lav")
         print()

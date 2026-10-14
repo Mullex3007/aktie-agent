@@ -14,17 +14,7 @@ alpaca_client = TradingClient(
     paper=True
 )
 
-SEKTOR_MAP = {
-    "JPM": "Finans", "BAC": "Finans", "GS": "Finans", "MS": "Finans",
-    "C": "Finans", "WFC": "Finans", "AXP": "Finans", "USB": "Finans",
-    "TFC": "Finans", "BLK": "Finans", "PGR": "Forsikring",
-    "PRU": "Forsikring", "AFL": "Forsikring", "ALL": "Forsikring",
-    "CB": "Forsikring", "HIG": "Forsikring", "AON": "Forsikring",
-    "CVX": "Energi", "XOM": "Energi", "BP": "Energi", "SHEL": "Energi",
-    "AAPL": "Tech", "MSFT": "Tech", "GOOGL": "Tech", "AMZN": "Tech",
-    "META": "Tech", "NVDA": "Tech", "ABT": "Sundhed", "PFE": "Sundhed",
-    "NVO": "Sundhed", "GMAB": "Sundhed", "BMY": "Sundhed"
-}
+from sektorer import SEKTOR_MAP
 
 def beregn_hit_rate_over_tid(handler):
     daglige = defaultdict(lambda: {"positive": 0, "total": 0})

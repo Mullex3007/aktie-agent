@@ -21,3 +21,9 @@ Læg filerne i din aktie-agent-mappe og overskriv de gamle. Din .env og handler_
     python3 traener_agent.py       # ugentligt
 
 Modellen er nu claude-sonnet-5-5. Du kan ændre den med CLAUDE_MODEL i .env.
+
+# Opdatering 2. november 2026: Slår agenten markedet? (v6)
+
+- afkast_maaling.py (ny): henter de rigtige køb og salg fra Alpaca (også stop-loss og take-profit), trækker 0,10% fra pr. køb og pr. salg, og sammenligner med hvad de samme dollars havde givet i S&P 500 (SPY) og Russell 2000 (IWM) i de samme dage. Viser også hele kontoen mod indeksene. Kør: `python3 afkast_maaling.py`
+- dashboard.py og dashboard_html.html: ny boks øverst, "Slår agenten markedet?", med graf. Målingen genberegnes højst én gang i timen.
+- maanedsrapport.py: månedsrapporten får målingen med.

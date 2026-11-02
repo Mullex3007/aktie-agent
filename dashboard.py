@@ -187,7 +187,24 @@ def index():
     data = byg_data(konto, positioner, handler, strategi, fejl)
     data["traener_dage"] = dage_siden_traening(strategi)
     data["traener_koerer"] = traener_koerer()
+    data["marked"], data["marked_fejl"] = maaling_mod_marked()
     return render_template_string(html, **data)
+
+
+_sidste_maalefejl = {"tid": None, "tekst": None}
+
+
+def maaling_mod_marked():
+    """Agentens rigtige afkast mod S&P 500 og Russell 2000 (genberegnes højst én gang i timen)."""
+    fejl = _sidste_maalefejl
+    if fejl["tid"] and datetime.now() - fejl["tid"] < timedelta(minutes=10):
+        return None, fejl["tekst"]
+    try:
+        from afkast_maaling import hent_maaling
+        return hent_maaling(), None
+    except Exception as e:
+        fejl["tid"], fejl["tekst"] = datetime.now(), f"Kunne ikke måle afkastet mod markedet: {e}"
+        return None, fejl["tekst"]
 
 
 def dage_siden_traening(strategi):

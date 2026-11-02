@@ -123,6 +123,7 @@ details { margin-top: 12px; font-size: 13px; }
 summary { cursor: pointer; color: var(--accent); font-weight: 600; }
 details p { max-width: 75ch; color: var(--daempet); }
 .fod { text-align: center; font-size: 12px; color: var(--daempet); }
+.marked-dom { font-size: 17px; font-weight: 600; }
 
 @media (max-width: 900px) {
   .kpi-raekke { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -204,6 +205,30 @@ details p { max-width: 75ch; color: var(--daempet); }
         <div>Snit taber<b class="ned">{{ "{:+.1f}".format(snit_tab) }}%</b></div>
       </div>
     </div>
+  </section>
+
+  <section class="kort">
+    <p class="etiket">Slår agenten markedet? · rigtigt afkast efter stop-loss og omkostninger</p>
+    {% if marked and marked.handler %}{% set m = marked.handler %}
+    <div class="marked-dom {{ 'op' if m.merafkast_pct > 0 else 'ned' }}">
+      {% if m.merafkast_pct > 0 %}Ja. Agentens handler gav {{ "{:.2f}".format(m.merafkast_pct)|replace('.', ',') }} procentpoint mere end S&amp;P 500.
+      {% else %}Ikke endnu. Agentens handler gav {{ "{:.2f}".format(-m.merafkast_pct)|replace('.', ',') }} procentpoint mindre end S&amp;P 500.{% endif %}
+    </div>
+    <div class="strategi" style="margin-top:12px">
+      <div>Agenten<b class="{{ 'op' if m.agent_pct >= 0 else 'ned' }}">{{ "{:+.2f}".format(m.agent_pct) }}%</b>{{ "{:+,.0f}".format(m.agent_kr) }} $</div>
+      <div>Samme penge i S&amp;P 500<b>{{ "{:+.2f}".format(m.spy_pct) }}%</b>{{ "{:+,.0f}".format(m.spy_kr) }} $</div>
+      <div>Samme penge i Russell 2000<b>{{ "{:+.2f}".format(m.iwm_pct) }}%</b>{{ "{:+,.0f}".format(m.iwm_kr) }} $</div>
+      <div>Handler der slog S&amp;P 500<b>{{ "{:.0f}".format(m.slog_spy_pct) }}%</b>af {{ m.antal }} handler</div>
+    </div>
+    {% if marked.seneste_30 %}<p class="under">Køb de seneste 30 dage ({{ marked.seneste_30.antal }}): agenten {{ "{:+.2f}".format(marked.seneste_30.agent_pct) }}% mod S&amp;P 500 {{ "{:+.2f}".format(marked.seneste_30.spy_pct) }}%. Mod målet (80% S&amp;P 500, 20% Russell 2000): {{ "{:+.2f}".format(m.merafkast_blandet_pct) }} point.</p>{% endif %}
+    {% if marked.konto %}
+    <p class="etiket" style="margin-top:16px">Hele kontoen siden {{ marked.konto.start_dato[8:10] }}/{{ marked.konto.start_dato[5:7] }}: {{ "{:+.2f}".format(marked.konto.konto_pct) }}% · S&amp;P 500 {{ "{:+.2f}".format(marked.konto.spy_pct or 0) }}% · Russell 2000 {{ "{:+.2f}".format(marked.konto.iwm_pct or 0) }}%</p>
+    <div class="graf-boks"><canvas id="markedGraf" aria-label="Kontoen mod S&amp;P 500 og Russell 2000"></canvas></div>
+    <p class="under">Kontoen tæller også de kontanter, der ikke er investeret. Er kun {{ "{:.0f}".format(investeret_pct) }}% investeret, kan kontoen ikke følge med markedet, selv hvis handlerne er gode.</p>
+    {% endif %}
+    <details><summary>Sådan regnes det</summary><p>Hver rigtig handel hos Alpaca, fra køb til salg (også når stop-loss eller take-profit slår til). Åbne positioner regnes til dagens kurs. Der trækkes {{ marked.omkostning_pct|replace('.', ',') }}% fra pr. køb og pr. salg for spread og slippage. Indeksene får udbytte med. Sammenligningen er: hvad havde de samme dollars givet i S&amp;P 500 og Russell 2000 i præcis de samme dage. Målt {{ marked.beregnet }}, opdateres hver time.</p></details>
+    {% elif marked_fejl %}<p class="under">{{ marked_fejl }}</p>
+    {% else %}<p class="under">Ingen handler at måle endnu.</p>{% endif %}
   </section>
 
   <section class="to-kol">
@@ -312,7 +337,7 @@ details p { max-width: 75ch; color: var(--daempet); }
     {% if strategi.analyse %}<details><summary>Læs træner-agentens analyse</summary><p>{{ strategi.analyse }}</p></details>{% endif %}
   </section>
 
-  <p class="fod">Opdateres automatisk hvert minut · Aktie Agent v4</p>
+  <p class="fod">Opdateres automatisk hvert minut · Aktie Agent v6</p>
 </div>
 
 <script>
@@ -343,6 +368,30 @@ details p { max-width: 75ch; color: var(--daempet); }
       }
     }
   });
+
+  const markedEl = document.getElementById('markedGraf');
+  {% if marked and marked.konto %}
+  if (markedEl) {
+    const ms = {{ marked.konto.serie | tojson }};
+    new Chart(markedEl, {
+      type: 'line',
+      data: { labels: ms.datoer, datasets: [
+        { label: 'Kontoen', data: ms.konto, borderColor: v('--accent'), tension: .2, pointRadius: 0, borderWidth: 2.5 },
+        { label: 'S&P 500', data: ms.SPY, borderColor: v('--maal'), tension: .2, pointRadius: 0, borderWidth: 1.5, spanGaps: true },
+        { label: 'Russell 2000', data: ms.IWM, borderColor: v('--daempet'), borderDash: [4, 3], tension: .2, pointRadius: 0, borderWidth: 1.5, spanGaps: true }
+      ] },
+      options: {
+        maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, boxHeight: 2 } },
+          tooltip: { callbacks: { label: c => c.dataset.label + ': ' + (c.parsed.y == null ? '–' : c.parsed.y.toFixed(2).replace('.', ',') + '%') } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { maxTicksLimit: 6, callback: function (val) { const d = this.getLabelForValue(val); return d.slice(8, 10) + '/' + d.slice(5, 7); } } },
+          y: { grid: { color: v('--linje') }, ticks: { callback: x => x + '%' } }
+        }
+      }
+    });
+  }
+  {% endif %}
 
   const sektorEl = document.getElementById('sektorGraf');
   if (sektorEl) {

@@ -95,6 +95,12 @@ def generer_maanedsrapport():
             rapport += f"  Begrundelse: {h['begrundelse']}\n"
         rapport += f"  Udfald: {h['udfald']}\n"
 
+    try:
+        from afkast_maaling import hent_maaling, rapport_tekst
+        rapport += "\n\n" + rapport_tekst(hent_maaling(tving=True)) + "\n"
+    except Exception as e:
+        rapport += f"\n\nKunne ikke måle afkastet mod markedet: {e}\n"
+
     rapport += "\n" + "="*40 + "\n"
     rapport += "Rapporten er genereret automatisk af din aktie-agent.\n"
 

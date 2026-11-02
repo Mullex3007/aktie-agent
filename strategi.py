@@ -21,7 +21,7 @@ STANDARD = {
 GRAENSER = {
     "justeret_max_pe": (10, 25),
     "justeret_max_afstand_fra_lav": (0.1, 0.5),
-    "justeret_konfidensgraense": (70, 90),
+    "justeret_konfidensgraense": (55, 90),
     "stop_loss_pct": (2, 15),
     "take_profit_pct": (3, 30),
     "maal_hit_rate": (50, 90),

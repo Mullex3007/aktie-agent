@@ -144,7 +144,7 @@ Udfør en grundig post-mortem analyse og returner KUN dette JSON-objekt:
     "justeret_max_pe": tal mellem 10 og 25,
     "justeret_max_afstand_fra_lav": tal mellem 0.2 og 0.5,
     "fokus_sektorer": ["sektorer at prioritere baseret paa data"],
-    "justeret_konfidensgraense": tal mellem 70 og 90,
+    "justeret_konfidensgraense": tal mellem 55 og 90,
     "stop_loss_pct": tal mellem 2 og 15,
     "take_profit_pct": tal mellem 3 og 30
 }}

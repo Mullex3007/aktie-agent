@@ -4,7 +4,7 @@ from anthropic import Anthropic
 from dotenv import load_dotenv
 from collections import defaultdict
 from datetime import datetime, timedelta
-from strategi import hent_strategi, gem_strategi, GRAENSER
+from strategi import hent_strategi, gem_strategi, GRAENSER, claude_tekst
 from sektorer import sektor_for
 
 load_dotenv()
@@ -152,11 +152,16 @@ Udfør en grundig post-mortem analyse og returner KUN dette JSON-objekt:
 
     besked = client.messages.create(
         model=CLAUDE_MODEL,
-        max_tokens=1500,
+        max_tokens=16000,
+        output_config={"effort": "high"},
         messages=[{"role": "user", "content": prompt}]
     )
 
-    tekst = besked.content[0].text
+    try:
+        tekst = claude_tekst(besked)
+    except ValueError as e:
+        print(f"Fejl fra Claude - strategi.json er IKKE aendret: {e}")
+        return
     start, slut = tekst.find("{"), tekst.rfind("}")
 
     try:

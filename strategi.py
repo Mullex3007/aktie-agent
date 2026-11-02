@@ -56,3 +56,13 @@ def hent_strategi():
 def gem_strategi(strategi):
     with open(STRATEGI_FIL, "w") as f:
         json.dump(strategi, f, indent=2, ensure_ascii=False)
+
+
+def claude_tekst(besked):
+    """Henter svaret fra Claude. Nyere modeller sender en tænke-blok først, så vi tager kun tekst-blokkene."""
+    if besked.stop_reason == "refusal":
+        raise ValueError("Claude afviste forespørgslen")
+    tekst = "".join(b.text for b in besked.content if b.type == "text")
+    if not tekst:
+        raise ValueError(f"Intet tekstsvar fra Claude (stop: {besked.stop_reason})")
+    return tekst

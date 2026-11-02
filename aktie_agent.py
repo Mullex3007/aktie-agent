@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from email_notifikation import send_email
 from datetime import datetime
 from screening import screen_aktier, ALLE_AKTIER
-from strategi import hent_strategi
+from strategi import hent_strategi, claude_tekst
 from sektorer import sektor_for
 
 load_dotenv()
@@ -122,10 +122,11 @@ Returner KUN dette JSON-objekt:
     try:
         besked = anthropic_client.messages.create(
             model=CLAUDE_MODEL,
-            max_tokens=500,
+            max_tokens=16000,
+            output_config={"effort": "medium"},
             messages=[{"role": "user", "content": prompt}]
         )
-        tekst = besked.content[0].text
+        tekst = claude_tekst(besked)
         # Tag kun JSON-delen, selv hvis Claude skriver tekst rundt om
         start, slut = tekst.find("{"), tekst.rfind("}")
         data = json.loads(tekst[start:slut + 1])

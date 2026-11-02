@@ -1,176 +1,387 @@
 <!DOCTYPE html>
-<html>
+<html lang="da">
 <head>
-    <meta charset="UTF-8">
-    <title>AKTIE AGENT TERMINAL</title>
-    <meta http-equiv="refresh" content="60">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<meta charset="UTF-8">
+<title>Aktie Agent</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta http-equiv="refresh" content="60">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Aktie Agent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+/* Layout: terminal-agtig oversigt. Nøgletal øverst, så grafer, så detaljer. Én kolonne på iPhone. */
+:root {
+  --bg: #eef2f0; --flade: #ffffff; --flade2: #f5f8f6; --linje: #dfe6e2;
+  --tekst: #14211d; --daempet: #5f6e68; --accent: #0f6b5c; --accent-blød: #dcefe9;
+  --gevinst: #1d7a3a; --gevinst-blød: #e2f3e6; --tab: #b3261e; --tab-blød: #fbe6e4;
+  --maal: #a85f00; --top: #13201c; --top-tekst: #e7efeb; --knap-tekst: #ffffff;
+  --sans: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d1513; --flade: #15201d; --flade2: #1b2824; --linje: #26352f;
+  --tekst: #e3ece8; --daempet: #93a39c; --accent: #4cc2a8; --accent-blød: #18342d;
+  --gevinst: #5cc97a; --gevinst-blød: #173322; --tab: #f07a70; --tab-blød: #3a1d1b;
+  --maal: #f0a53c; --top: #0a100e; --top-tekst: #e3ece8; --knap-tekst: #0a100e; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0d1513; --flade: #15201d; --flade2: #1b2824; --linje: #26352f;
+  --tekst: #e3ece8; --daempet: #93a39c; --accent: #4cc2a8; --accent-blød: #18342d;
+  --gevinst: #5cc97a; --gevinst-blød: #173322; --tab: #f07a70; --tab-blød: #3a1d1b;
+  --maal: #f0a53c; --top: #0a100e; --top-tekst: #e3ece8; --knap-tekst: #0a100e; color-scheme: dark; }
 
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f7fa; color: #1a2332; padding: 20px; }
-        .topbar { display: flex; justify-content: space-between; align-items: center; background: #1a2332; color: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; }
-        .topbar h1 { font-size: 18px; letter-spacing: 2px; color: #7eb8f7; }
-        .topbar .meta { font-size: 11px; color: #8899aa; }
-        .live-dot { display: inline-block; width: 8px; height: 8px; background: #4caf50; border-radius: 50%; margin-right: 6px; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .grid-32 { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .kort { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-        .kort-titel { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: #8899aa; text-transform: uppercase; margin-bottom: 12px; }
-        .stat-tal { font-size: 36px; font-weight: 700; color: #1a2332; line-height: 1; }
-        .stat-sub { font-size: 11px; color: #8899aa; margin-top: 4px; }
-        .hit-tal { font-size: 52px; font-weight: 700; line-height: 1; }
-        .rr-tal { font-size: 38px; font-weight: 700; line-height: 1; }
-        .maal { font-size: 10px; color: #8899aa; margin-top: 4px; letter-spacing: 1px; }
-        .metrics-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 15px; }
-        .metric { background: #f5f7fa; border-radius: 8px; padding: 10px; text-align: center; }
-        .metric-tal { font-size: 16px; font-weight: 700; }
-        .metric-label { font-size: 9px; color: #8899aa; margin-top: 2px; letter-spacing: 1px; }
-        .groen { color: #2e7d32; }
-        .roed { color: #c62828; }
-        .blaa { color: #1565c0; }
-        .graa { color: #546e7a; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { font-size: 10px; font-weight: 600; letter-spacing: 1px; color: #8899aa; padding: 8px; text-align: left; border-bottom: 1px solid #f0f0f0; }
-        td { padding: 8px; border-bottom: 1px solid #f9f9f9; }
-        tr:hover { background: #f8fafc; }
-        .buy-tag { background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
-        .sell-tag { background: #ffebee; color: #c62828; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
-        .ticker-navn { font-weight: 600; color: #1565c0; }
-        .uge-boks { background: #1a2332; border-radius: 10px; padding: 20px; margin-bottom: 15px; color: white; }
-        .uge-titel { font-size: 10px; letter-spacing: 1.5px; color: #7eb8f7; margin-bottom: 10px; }
-        .uge-tekst { font-size: 13px; color: #cdd8e3; line-height: 1.6; }
-        .knap { background: #1565c0; color: white; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; letter-spacing: 1px; }
-        .knap:hover { background: #1976d2; }
-        .status { text-align: center; color: #8899aa; font-size: 10px; margin-top: 15px; }
-        .progress-bar { background: #e0e0e0; border-radius: 4px; height: 6px; margin-top: 8px; }
-        .progress-fill { height: 6px; border-radius: 4px; }
-    </style>
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--tekst); font: 14px/1.45 var(--sans);
+  padding-block: 16px 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.side { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+.tal { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+.topbar { background: var(--top); color: var(--top-tekst); border-radius: 12px; padding: 14px 18px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; justify-content: space-between; }
+.topbar h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: .04em; }
+.topbar .meta { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: 12px; opacity: .85; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 99px; font-size: 11px; font-weight: 600; letter-spacing: .06em; }
+.chip.paper { background: #f0a53c22; color: #f0a53c; border: 1px solid #f0a53c66; }
+.prik { width: 7px; height: 7px; border-radius: 50%; background: #5cc97a; animation: puls 2s infinite; }
+@keyframes puls { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .prik { animation: none; } }
+.knap { background: var(--accent); color: var(--knap-tekst); border: 0; border-radius: 8px; padding: 8px 14px; font: 600 13px var(--sans); cursor: pointer; text-decoration: none; }
+.knap:hover { filter: brightness(1.1); }
+.knap:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.besked { border-radius: 10px; padding: 10px 14px; font-size: 13px; }
+.besked.fejl { background: var(--tab-blød); color: var(--tab); }
+.besked.ok { background: var(--gevinst-blød); color: var(--gevinst); }
+
+.kpi-raekke { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.kort { background: var(--flade); border: 1px solid var(--linje); border-radius: 12px; padding: 16px 18px; min-width: 0; }
+.etiket { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--daempet); margin: 0 0 10px; }
+.stort { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 28px; font-weight: 600; line-height: 1.1; }
+.under { font-size: 12px; color: var(--daempet); margin-top: 6px; }
+.op { color: var(--gevinst); } .ned { color: var(--tab); }
+.bar { position: relative; height: 8px; background: var(--flade2); border-radius: 4px; margin-top: 12px; }
+.bar .fyld { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 4px; }
+.bar .maalstreg { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--maal); }
+.mini { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.mini div { background: var(--flade2); border-radius: 8px; padding: 6px 8px; font-size: 11px; color: var(--daempet); }
+.mini b { display: block; font: 600 14px var(--mono); font-variant-numeric: tabular-nums; color: var(--tekst); }
+
+.to-kol { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 14px; }
+.lige { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+.graf-boks { position: relative; height: 330px; }
+.donut-boks { position: relative; height: 260px; }
+.forklaring { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 10px; font-size: 13px; }
+.sektor-hoved { display: grid; grid-template-columns: 12px 1fr auto auto; gap: 8px; align-items: center; }
+.forklaring .farve { width: 10px; height: 10px; border-radius: 3px; }
+.forklaring .pct { font-weight: 600; min-width: 48px; text-align: right; }
+.forklaring .antal { color: var(--daempet); font-size: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 0 20px; }
+.chip-pos { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 6px;
+  background: var(--flade2); border: 1px solid var(--linje); font: 500 12px var(--mono); font-variant-numeric: tabular-nums; cursor: default; }
+.chip-pos .andel-s { color: var(--daempet); }
+.chip-pos .pil { width: 6px; height: 6px; border-radius: 50%; }
+.chip-pos .pil.op { background: var(--gevinst); } .chip-pos .pil.ned { background: var(--tab); }
+.chip-pos .pop { display: none; position: absolute; z-index: 5; bottom: calc(100% + 6px); left: 0; min-width: 170px;
+  background: var(--top); color: var(--top-tekst); border-radius: 8px; padding: 8px 10px; font: 12px/1.5 var(--sans); box-shadow: 0 6px 18px #0004; white-space: nowrap; }
+.chip-pos .pop b { font-family: var(--mono); }
+.chip-pos:hover .pop, .chip-pos:focus .pop { display: block; }
+.chip-pos:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.tabel-boks { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--daempet); padding: 6px 8px; border-bottom: 1px solid var(--linje); white-space: nowrap; }
+td { padding: 7px 8px; border-bottom: 1px solid var(--linje); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+.h { text-align: right; }
+.ticker { font-weight: 600; font-family: var(--mono); }
+.sektor-tag { font-size: 11px; color: var(--daempet); }
+.pille { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+.pille.vinder { background: var(--gevinst-blød); color: var(--gevinst); }
+.pille.taber { background: var(--tab-blød); color: var(--tab); }
+.pille.afventer { background: var(--flade2); color: var(--daempet); }
+.pille.koeb { background: var(--accent-blød); color: var(--accent); }
+.pille.salg { background: var(--flade2); color: var(--daempet); }
+.andelsbar { display: inline-block; height: 6px; background: var(--accent); border-radius: 3px; vertical-align: middle; margin-right: 6px; opacity: .7; }
+
+.sektor-rk { display: grid; grid-template-columns: 84px 1fr 96px; gap: 10px; align-items: center; font-size: 13px; padding: 4px 0; }
+.sektor-rk .spor { position: relative; height: 10px; background: var(--flade2); border-radius: 5px; }
+.sektor-rk .spor .fyld { position: absolute; inset: 0 auto 0 0; border-radius: 5px; }
+.sektor-rk .spor .maalstreg { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--maal); }
+.sektor-rk .v { text-align: right; }
+
+.strategi { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.strategi div { background: var(--flade2); border-radius: 8px; padding: 8px 10px; font-size: 11px; color: var(--daempet); }
+.strategi b { display: block; font: 600 16px var(--mono); color: var(--tekst); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tags span { font: 500 12px var(--mono); padding: 2px 7px; border-radius: 5px; }
+.tags.fokus span { background: var(--gevinst-blød); color: var(--gevinst); }
+.tags.undgaa span { background: var(--tab-blød); color: var(--tab); }
+details { margin-top: 12px; font-size: 13px; }
+summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+details p { max-width: 75ch; color: var(--daempet); }
+.fod { text-align: center; font-size: 12px; color: var(--daempet); }
+
+@media (max-width: 900px) {
+  .kpi-raekke { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .to-kol, .lige { grid-template-columns: minmax(0, 1fr); }
+  .strategi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .kpi-raekke { gap: 10px; }
+  .kort { padding: 14px; }
+  .stort { font-size: 22px; }
+  .graf-boks { height: 220px; }
+  .skjul-mobil { display: none; }
+}
+</style>
 </head>
 <body>
-    <div class="topbar">
-        <h1>AKTIE AGENT DASHBOARD</h1>
-        <div class="meta"><span class="live-dot"></span>LIVE | <span id="liveur"></span> | PAPER TRADING</div>
+{% set sektor_farver = {"Energi": "#d9822b", "Finans": "#2f6fb3", "Forsikring": "#6a51a3", "Tech": "#0f8b8d", "Sundhed": "#c2416b", "Forbrug": "#8a9a2e", "Industri": "#7b6a58", "Andre": "#8c9a95"} %}
+<div class="side">
+
+  <header class="topbar">
+    <h1>AKTIE AGENT</h1>
+    <div class="meta">
+      <span class="chip paper"><span class="prik"></span>PAPER TRADING</span>
+      <span>Opdateret {{ tidspunkt }}</span>
+      <a class="knap" href="/koer-agent">Kør agent nu</a>
+      <a class="knap" href="/koer-traener">Kør træner-agent</a>
     </div>
-    <div class="uge-boks">
-        <div class="uge-titel">UGENTLIG KONKLUSION</div>
-        <div class="uge-tekst">{{ uge_konklusion }}</div>
-    </div>
-    <div class="grid-3">
-        <div class="kort">
-            <div class="kort-titel">Portfolio Vaerdi</div>
-            <div class="stat-tal">${{ portfolio_value }}</div>
-            <div class="stat-sub">{{ aktive_positioner }} aktive positioner</div>
-            <div class="metrics-row">
-                <div class="metric"><div class="metric-tal">{{ total_handler }}</div><div class="metric-label">TOTAL</div></div>
-                <div class="metric"><div class="metric-tal groen">{{ positive }}</div><div class="metric-label">WINS</div></div>
-                <div class="metric"><div class="metric-tal roed">{{ negative }}</div><div class="metric-label">LOSSES</div></div>
-            </div>
-        </div>
-        <div class="kort" style="text-align:center;">
-            <div class="kort-titel">Hit Rate</div>
-            <div class="hit-tal" style="color: {{ hit_farve }}">{{ hit_rate }}%</div>
-            <div class="maal">MÅL: 70%+</div>
-            <div class="progress-bar"><div class="progress-fill" style="width:{{ hit_rate }}%; background:{{ hit_farve }};"></div></div>
-        </div>
-        <div class="kort" style="text-align:center;">
-            <div class="kort-titel">Risk / Reward</div>
-            <div class="rr-tal" style="color: {{ rr_farve }}">1:{{ risk_reward }}</div>
-            <div class="maal">MÅL: 1:1.5+</div>
-            <div class="metrics-row">
-                <div class="metric"><div class="metric-tal groen">+{{ snit_gevinst }}%</div><div class="metric-label">SNIT WIN</div></div>
-                <div class="metric"><div class="metric-tal roed">{{ snit_tab }}%</div><div class="metric-label">SNIT TAB</div></div>
-                <div class="metric"><div class="metric-tal blaa">${{ cash }}</div><div class="metric-label">CASH</div></div>
-            </div>
-        </div>
-    </div>
-    <div class="grid-32">
-        <div class="kort">
-            <div class="kort-titel">Performance Over Tid</div>
-            <canvas id="performanceGraf" height="80"></canvas>
-        </div>
-        <div class="kort">
-            <div class="kort-titel">Positioner Per Sektor</div>
-            <canvas id="sektorGraf" height="160"></canvas>
-            <div style="text-align:center; margin-top:8px; font-size:10px; color:#8899aa;">{{ aktive_positioner }} positioner i alt</div>
-        </div>
-    </div>
-    <div class="grid-2">
-        <div class="kort">
-    <div class="kort-titel">Aktive Positioner Per Sektor ({{ aktive_positioner }})</div>
-    <canvas id="positionerGraf" height="160"></canvas>
-    <div style="margin-top:12px; max-height:250px; overflow-y:auto;">
-    {% set ns = namespace(sektor='') %}
-    {% set ns2 = namespace(col=0) %}
-    {% for sektor, ticker in sektor_detaljer %}
-        {% if sektor != ns.sektor %}
-            {% set ns.sektor = sektor %}
-            <div style="font-size:10px; font-weight:700; color:#8899aa; letter-spacing:1px; margin-top:8px; margin-bottom:2px; text-transform:uppercase;">{{ sektor }}</div>
-            <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
-        {% endif %}
-        <div style="font-size:11px; color:#1565c0; background:#f0f4ff; border-radius:4px; padding:2px 6px;">{{ ticker }}</div>
-        {% if loop.last or sektor_detaljer[loop.index0+1][0] != sektor %}
-            </div>
-        {% endif %}
-    {% endfor %}
+  </header>
+
+  {% if fejl %}<div class="besked fejl">{{ fejl }}</div>{% endif %}
+  {% if request and request.args.get('traener') %}<div class="besked ok">Træner-agenten er startet. Den tager et par minutter, og den nye strategi vises her, når du genindlæser siden.</div>
+  {% elif traener_koerer %}<div class="besked ok">Træner-agenten kører lige nu.</div>
+  {% elif traener_dage is none or traener_dage >= 8 %}<div class="besked fejl">Træner-agenten har ikke kørt {% if traener_dage is none %}endnu{% else %}i {{ traener_dage }} dage{% endif %}. Tryk på "Kør træner-agent" for at starte den.</div>{% endif %}
+  {% if request and request.args.get('startet') %}<div class="besked ok">Agenten er startet. Nye handler dukker op her, når den er færdig.</div>{% endif %}
+
+  <section class="kpi-raekke">
+    <div class="kort">
+      <p class="etiket">Porteføljeværdi</p>
+      <div class="stort">{% if har_konto %}${{ "{:,.0f}".format(portefolje) }}{% else %}–{% endif %}</div>
+      <div class="under tal">
+        {% if dagens is not none %}
+          <span class="{{ 'op' if dagens >= 0 else 'ned' }}">{{ "{:+,.0f}".format(dagens) }} $ ({{ "{:+.2f}".format(dagens_pct) }}%)</span> i dag
+        {% else %}&nbsp;{% endif %}
+      </div>
+      <div class="mini">
+        <div>Kontanter<b>{% if har_konto %}${{ "{:,.0f}".format(cash) }}{% else %}–{% endif %}</b></div>
+        <div>Investeret<b>{{ "{:.0f}".format(investeret_pct) }}%</b></div>
+      </div>
     </div>
 
-        </div>
-        <div class="kort">
-            <div class="kort-titel">Seneste 10 Handler</div>
-            <table>
-                <tr><th>DATO</th><th>TICKER</th><th>TYPE</th><th>UDFALD</th></tr>
-                {% for h in seneste_handler %}
-                <tr>
-                    <td style="color:#8899aa">{{ h.dato[5:10] }}</td>
-                    <td class="ticker-navn">{{ h.ticker }}</td>
-                    <td><span class="{{ 'buy-tag' if h.anbefaling == 'BUY' else 'sell-tag' }}">{{ h.anbefaling }}</span></td>
-                    <td class="{{ 'groen' if '\u2705' in h.udfald else 'roed' if '\u274c' in h.udfald else 'graa' }}">{{ h.udfald }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
+    <div class="kort">
+      <p class="etiket">Hit rate, samlet</p>
+      <div class="stort" style="color: {{ 'var(--gevinst)' if hit_rate >= maal else 'var(--tekst)' }}">{{ hit_rate }}%</div>
+      <div class="under">Mål {{ maal }}% før rigtige penge</div>
+      <div class="bar"><div class="fyld" style="width: {{ hit_rate }}%"></div><div class="maalstreg" style="left: {{ maal }}%"></div></div>
+      <div class="mini">
+        <div>Vindere<b class="op">{{ positive }}</b></div>
+        <div>Tabere<b class="ned">{{ negative }}</b></div>
+      </div>
     </div>
-    <div style="text-align:center; margin-top:20px;">
-        <a href="/koer-agent"><button class="knap">KOR AGENT NU</button></a>
+
+    <div class="kort">
+      <p class="etiket">Hit rate, 30 dage</p>
+      <div class="stort" style="color: {{ 'var(--gevinst)' if hit_rate_30 >= maal else 'var(--tekst)' }}">{{ hit_rate_30 }}%</div>
+      <div class="under">{{ antal_30 }} afgjorte handler · {{ "{:+d}".format(hit_rate_30 - hit_rate) }} point mod samlet</div>
+      <div class="bar"><div class="fyld" style="width: {{ hit_rate_30 }}%"></div><div class="maalstreg" style="left: {{ maal }}%"></div></div>
+      <div class="mini">
+        <div>Handler i alt<b>{{ total_handler }}</b></div>
+        <div>Afventer<b>{{ afventer }}</b></div>
+      </div>
     </div>
-    <p class="status">Opdateres automatisk hvert minut | Aktie Agent v3.0</p>
-    <script>
-    new Chart(document.getElementById("performanceGraf").getContext("2d"), {
-        type: "line",
-        data: { labels: {{ datoer | tojson }}, datasets: [{ data: {{ hit_rates | tojson }}, borderColor: "#1565c0", backgroundColor: "rgba(21,101,192,0.08)", fill: true, tension: 0.4, pointRadius: 2, borderWidth: 2 }] },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: "#8899aa", font: { size: 9 } }, grid: { color: "#f0f0f0" } }, y: { ticks: { color: "#8899aa", font: { size: 9 } }, grid: { color: "#f0f0f0" }, min: 0, max: 100 } } }
-    });
-    new Chart(document.getElementById("sektorGraf").getContext("2d"), {
-        type: "doughnut",
-        data: { labels: {{ sektor_labels | tojson }}, datasets: [{ data: {{ sektor_data | tojson }}, backgroundColor: ["#1565c0","#2e7d32","#00838f","#6a1b9a","#e65100","#546e7a"], borderWidth: 2, borderColor: "#fff" }] },
-        options: { responsive: true, plugins: {
-            legend: { position: "bottom", labels: { color: "#546e7a", font: { size: 9 }, boxWidth: 10, padding: 8 } },
-            tooltip: { callbacks: { label: function(c) { const total = c.dataset.data.reduce((a,b) => a+b, 0); const pct = Math.round(c.parsed / total * 100); return c.label + ": " + c.parsed + " (" + pct + "%)"; } } },
-            datalabels: { display: false }
-        }}
-    });new Chart(document.getElementById("positionerGraf").getContext("2d"), {
-    type: "doughnut",
-    data: { labels: {{ sektor_labels | tojson }}, datasets: [{ data: {{ sektor_data | tojson }}, backgroundColor: ["#1565c0","#2e7d32","#00838f","#6a1b9a","#e65100","#546e7a"], borderWidth: 2, borderColor: "#fff", datalabels: { color: "#fff", font: { size: 12, weight: "bold" }, formatter: function(value, ctx) { const total = ctx.dataset.data.reduce((a,b) => a+b, 0); const pct = Math.round(value / total * 100); return pct >= 5 ? pct + "%" : ""; } } }] },
-    options: { responsive: true, plugins: {
-        legend: { position: "right", labels: { color: "#546e7a", font: { size: 11 }, boxWidth: 12, padding: 10 } }
-    }},
-    plugins: [ChartDataLabels]
-});
-    </script>
+
+    <div class="kort">
+      <p class="etiket">Gevinst mod tab</p>
+      <div class="stort" style="color: {{ 'var(--gevinst)' if rr >= 1.5 else 'var(--tab)' if rr < 1 else 'var(--tekst)' }}">1 : {{ "{:.2f}".format(rr) }}</div>
+      <div class="under">Mål 1 : 1,5 eller bedre</div>
+      <div class="mini">
+        <div>Snit vinder<b class="op">{{ "{:+.1f}".format(snit_gevinst) }}%</b></div>
+        <div>Snit taber<b class="ned">{{ "{:+.1f}".format(snit_tab) }}%</b></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="to-kol">
+    <div class="kort">
+      <p class="etiket">Hit rate over tid</p>
+      <div class="graf-boks"><canvas id="hitGraf" aria-label="Hit rate over tid"></canvas></div>
+    </div>
+    <div class="kort">
+      <p class="etiket">Aktuelle positioner pr. sektor ({{ positioner|length }})</p>
+      {% if sektor_fordeling %}
+      <div class="donut-boks"><canvas id="sektorGraf" aria-label="Positioner fordelt på sektor"></canvas></div>
+      <ul class="forklaring">
+        {% for s in sektor_fordeling %}
+        <li>
+          <div class="sektor-hoved"><span class="farve" style="background: {{ sektor_farver.get(s.sektor, '#8c9a95') }}"></span>
+            <span>{{ s.sektor }} <span class="antal">· {{ s.antal }} {{ 'aktie' if s.antal == 1 else 'aktier' }}</span></span>
+            <span class="antal tal {{ 'op' if s.afkast_pct >= 0 else 'ned' }}">{{ "{:+.1f}".format(s.afkast_pct) }}%</span>
+            <span class="pct tal">{{ "{:.1f}".format(s.andel) }}%</span></div>
+          <div class="chips">
+            {% for p in s.positioner %}
+            <span class="chip-pos" tabindex="0" aria-label="{{ p.ticker }}: {{ '{:+.1f}'.format(p.afkast_pct) }}% afkast">
+              <span class="pil {{ 'op' if p.afkast_pct >= 0 else 'ned' }}"></span>{{ p.ticker }} <span class="andel-s">{{ "{:.0f}".format(p.andel_sektor) }}%</span>
+              <span class="pop"><b>{{ p.ticker }}</b> · {{ s.sektor }}<br>
+                Afkast: <b class="{{ 'op' if p.afkast_pct >= 0 else 'ned' }}">{{ "{:+.1f}".format(p.afkast_pct) }}% ({{ "{:+,.0f}".format(p.afkast_kr) }} $)</b><br>
+                Værdi: <b>${{ "{:,.0f}".format(p.vaerdi) }}</b><br>
+                {{ "{:.0f}".format(p.andel_sektor) }}% af {{ s.sektor }} · {{ "{:.1f}".format(p.andel) }}% af alt</span>
+            </span>
+            {% endfor %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      <p class="under">Inderste ring: sektorens andel af det hele. Yderste ring: hver aktie. Procenten ved aktien er dens andel af sektoren. Hold musen over (eller tryk på iPhone) for at se afkastet.</p>
+      {% else %}<p class="under">Ingen åbne positioner.</p>{% endif %}
+    </div>
+  </section>
+
+  <section class="kort">
+    <p class="etiket">Åbne positioner</p>
+    <div class="tabel-boks">
+      <table>
+        <thead><tr><th>Aktie</th><th class="skjul-mobil">Sektor</th><th class="h skjul-mobil">Antal</th><th class="h">Værdi</th><th>Andel</th><th class="h">Afkast</th><th class="h">Afkast $</th></tr></thead>
+        <tbody>
+        {% for p in positioner %}
+          <tr>
+            <td class="ticker">{{ p.ticker }}</td>
+            <td class="sektor-tag skjul-mobil">{{ p.sektor }}</td>
+            <td class="h tal skjul-mobil">{{ "{:g}".format(p.antal) }}</td>
+            <td class="h tal">${{ "{:,.0f}".format(p.vaerdi) }}</td>
+            <td class="tal"><span class="andelsbar" style="width: {{ (p.andel * 2)|round(0) }}px"></span>{{ "{:.1f}".format(p.andel) }}%</td>
+            <td class="h tal {{ 'op' if p.afkast_pct >= 0 else 'ned' }}">{{ "{:+.1f}".format(p.afkast_pct) }}%</td>
+            <td class="h tal {{ 'op' if p.afkast_kr >= 0 else 'ned' }}">{{ "{:+,.0f}".format(p.afkast_kr) }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7" class="sektor-tag">Ingen åbne positioner.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="lige">
+    <div class="kort">
+      <p class="etiket">Hit rate pr. sektor</p>
+      {% for s in sektor_hit %}
+      <div class="sektor-rk">
+        <span>{{ s.sektor }}</span>
+        <span class="spor"><span class="fyld" style="width: {{ s.hit_rate }}%; background: {{ 'var(--gevinst)' if s.hit_rate >= maal else 'var(--tab)' if s.hit_rate < 45 else 'var(--daempet)' }}"></span><span class="maalstreg" style="left: {{ maal }}%"></span></span>
+        <span class="v tal">{{ s.hit_rate }}% <span class="sektor-tag">({{ s.antal }})</span></span>
+      </div>
+      {% endfor %}
+      <p class="under">Den orange streg er målet på {{ maal }}%. Tallet i parentes er antal afgjorte handler.</p>
+    </div>
+
+    <div class="kort">
+      <p class="etiket">Seneste 10 handler</p>
+      <div class="tabel-boks">
+        <table>
+          <thead><tr><th>Dato</th><th>Aktie</th><th>Type</th><th class="h">Kurs</th><th class="h">Udfald</th></tr></thead>
+          <tbody>
+          {% for h in seneste_handler %}
+            <tr title="{{ h.begrundelse }}">
+              <td class="tal sektor-tag">{{ h.dato[8:10] }}/{{ h.dato[5:7] }}</td>
+              <td class="ticker">{{ h.ticker }}</td>
+              <td><span class="pille {{ 'koeb' if h.anbefaling == 'BUY' else 'salg' }}">{{ 'Køb' if h.anbefaling == 'BUY' else 'Salg' if h.anbefaling == 'SELL' else h.anbefaling }}</span></td>
+              <td class="h tal">${{ "{:,.2f}".format(h.pris) }}</td>
+              <td class="h"><span class="pille {{ h.status }} tal">{% if h.status == 'afventer' %}Afventer{% else %}{{ "{:+.1f}".format(h.afkast) }}%{% endif %}</span></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="kort">
+    <p class="etiket">Strategi fra træner-agenten{% if strategi.opdateret %} · {{ strategi.opdateret }}{% endif %}</p>
+    <div class="strategi">
+      <div>Stop-loss<b>{{ strategi.stop_loss_pct if strategi.stop_loss_pct is defined else '–' }}%</b></div>
+      <div>Take-profit<b>{{ strategi.take_profit_pct if strategi.take_profit_pct is defined else '–' }}%</b></div>
+      <div>Konfidensgrænse<b>{{ strategi.justeret_konfidensgraense or '–' }}%</b></div>
+      <div>Max P/E<b>{{ strategi.justeret_max_pe or '–' }}</b></div>
+    </div>
+    {% if strategi.fokus_aktier %}<p class="under" style="margin-top:12px">Fokus</p><div class="tags fokus">{% for t in strategi.fokus_aktier %}<span>{{ t }}</span>{% endfor %}</div>{% endif %}
+    {% if strategi.undgaa_aktier %}<p class="under" style="margin-top:10px">Undgås</p><div class="tags undgaa">{% for t in strategi.undgaa_aktier %}<span>{{ t }}</span>{% endfor %}</div>{% endif %}
+    {% if strategi.analyse %}<details><summary>Læs træner-agentens analyse</summary><p>{{ strategi.analyse }}</p></details>{% endif %}
+  </section>
+
+  <p class="fod">Opdateres automatisk hvert minut · Aktie Agent v4</p>
+</div>
+
 <script>
-function opdaterUr() {
-    const nu = new Date();
-    const dato = nu.toISOString().slice(0,10);
-    const tid = nu.toTimeString().slice(0,8);
-    document.getElementById('liveur').textContent = dato + ' ' + tid;
-}
-opdaterUr();
-setInterval(opdaterUr, 1000);
+(function () {
+  const css = getComputedStyle(document.documentElement);
+  const v = n => css.getPropertyValue(n).trim();
+  Chart.defaults.font.family = v('--sans');
+  Chart.defaults.color = v('--daempet');
+  const maal = {{ maal }};
+
+  new Chart(document.getElementById('hitGraf'), {
+    type: 'line',
+    data: {
+      labels: {{ datoer | tojson }},
+      datasets: [
+        { label: 'Samlet', data: {{ hit_samlet | tojson }}, borderColor: v('--accent'), backgroundColor: v('--accent-blød'), fill: true, tension: .3, pointRadius: 0, borderWidth: 2 },
+        { label: 'Seneste 30 dage', data: {{ hit_rullende | tojson }}, borderColor: v('--gevinst'), borderDash: [4, 3], tension: .3, pointRadius: 0, borderWidth: 2, spanGaps: true },
+        { label: 'Mål ' + maal + '%', data: {{ datoer | tojson }}.map(() => maal), borderColor: v('--maal'), borderWidth: 1.5, pointRadius: 0, borderDash: [2, 4] }
+      ]
+    },
+    options: {
+      maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, boxHeight: 2 } },
+        tooltip: { callbacks: { label: c => c.dataset.label + ': ' + (c.parsed.y ?? '–') + '%' } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 6, callback: function (val) { const d = this.getLabelForValue(val); return d.slice(8, 10) + '/' + d.slice(5, 7); } } },
+        y: { min: 20, max: 90, grid: { color: v('--linje') }, ticks: { stepSize: 10, callback: x => x + '%' } }
+      }
+    }
+  });
+
+  const sektorEl = document.getElementById('sektorGraf');
+  if (sektorEl) {
+    const farver = {{ sektor_farver | tojson }};
+    const fordeling = {{ sektor_fordeling | tojson }};
+    const aktier = fordeling.flatMap(s => s.positioner);
+    const fmt = n => (n >= 0 ? '+' : '') + n.toFixed(1).replace('.', ',') + '%';
+    const lys = hex => hex + 'b3';
+    new Chart(sektorEl, {
+      type: 'doughnut',
+      data: { datasets: [
+        { data: aktier.map(a => Math.round(a.vaerdi)), backgroundColor: aktier.map(a => lys(farver[a.sektor] || '#8c9a95')),
+          borderColor: v('--flade'), borderWidth: 2, weight: 1.1,
+          datalabels: { formatter: (val, ctx) => aktier[ctx.dataIndex].andel >= 4 ? aktier[ctx.dataIndex].ticker : '', font: { size: 10, weight: '600' } } },
+        { data: fordeling.map(s => Math.round(s.vaerdi)), backgroundColor: fordeling.map(s => farver[s.sektor] || '#8c9a95'),
+          borderColor: v('--flade'), borderWidth: 2, weight: 1,
+          datalabels: { formatter: (val, ctx) => fordeling[ctx.dataIndex].andel >= 6 ? Math.round(fordeling[ctx.dataIndex].andel) + '%' : '', font: { size: 12, weight: '600' } } }
+      ] },
+      options: {
+        maintainAspectRatio: false, cutout: '38%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: {
+            title: items => { const c = items[0]; return c.datasetIndex === 0 ? aktier[c.dataIndex].ticker + ' · ' + aktier[c.dataIndex].sektor : fordeling[c.dataIndex].sektor; },
+            label: c => {
+              if (c.datasetIndex === 0) { const a = aktier[c.dataIndex];
+                return ['Afkast: ' + fmt(a.afkast_pct) + ' (' + Math.round(a.afkast_kr).toLocaleString('da-DK') + ' $)',
+                        'Værdi: $' + Math.round(a.vaerdi).toLocaleString('da-DK'),
+                        Math.round(a.andel_sektor) + '% af ' + a.sektor + ' · ' + a.andel.toFixed(1).replace('.', ',') + '% af alt']; }
+              const s = fordeling[c.dataIndex];
+              return [s.andel.toFixed(1).replace('.', ',') + '% af porteføljen', 'Afkast: ' + fmt(s.afkast_pct)];
+            } } },
+          datalabels: { color: '#fff' }
+        }
+      },
+      plugins: [ChartDataLabels]
+    });
+  }
+})();
 </script>
 </body>
 </html>
